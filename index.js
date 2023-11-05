@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-app.use(express.json());
 require("dotenv").config();
 app.use(cors());
+app.use(express.json());
 const port = process.env.PORT || 5000;
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -20,7 +20,8 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // await client.connect();
-    const roomDB = client.db("roomDB").collection("rooms");
+    const roomCollection = client.db("roomDB").collection("rooms");
+    const bookingCollection = client.db("roomDB").collection("booking");
     app.get("/", (req, res) => {
       res.send("server root route");
     });
@@ -28,7 +29,7 @@ async function run() {
     //get all data
     app.get("/rooms", async (req, res) => {
       try {
-        const result = await roomDB.find().toArray();
+        const result = await roomCollection.find().toArray();
         res.send(result);
       } catch (error) {
         console.log({ message: error });
@@ -36,12 +37,24 @@ async function run() {
     });
     // get specific data
     app.get("/rooms/details/:id", async (req, res) => {
-      const id = req.params.id;
-      console.log(id);
-      const query = { _id: new ObjectId(id) };
-      const result = await roomDB.find(query).toArray();
-      console.log(result);
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await roomCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log({ meesage: error });
+      }
+    });
+    // add booking
+    app.post("/booking", async (req, res) => {
+      try {
+        const book = req.body;
+        const result = await bookingCollection.insertOne(book);
+        res.send(result);
+      } catch (error) {
+        console.log({ meesage: error });
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
