@@ -46,6 +46,7 @@ async function run() {
         console.log({ meesage: error });
       }
     });
+
     // add booking
     app.post("/booking", async (req, res) => {
       try {
@@ -54,6 +55,28 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log({ meesage: error });
+      }
+    });
+
+    //get all booking data
+    app.get("/booking", async (req, res) => {
+      try {
+        const result = await bookingCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log({ message: error });
+      }
+    });
+    //get specific bookings
+    app.get("/booking/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        console.log(email);
+        const query = { email: email };
+        const result = await bookingCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log({ message: error });
       }
     });
 
