@@ -35,7 +35,7 @@ async function run() {
         console.log({ message: error });
       }
     });
-    // get specific data
+    // get specific room data
     app.get("/rooms/details/:id", async (req, res) => {
       try {
         const id = req.params.id;
@@ -47,7 +47,7 @@ async function run() {
       }
     });
 
-    //update specific data
+    //update specific room data
     app.patch("/rooms/:id", async (req, res) => {
       const roomId = req.params.id;
       const updateSeat = req.body;
@@ -93,6 +93,36 @@ async function run() {
       } catch (error) {
         console.log({ message: error });
       }
+    });
+    // get single booking
+    app.get("/mybookings/update/:id", async (req, res) => {
+      try {
+        const bookingId = req.params.id;
+        const query = { _id: new ObjectId(bookingId) };
+        const result = await bookingCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log({ message: error });
+      }
+    });
+    // update booking date
+    app.patch("/mybookings/update/:id", async (req, res) => {
+      const bookingId = req.params.id;
+      const updateDate = req.body;
+      const filter = { _id: new ObjectId(bookingId) };
+      const option = { upsert: false };
+      const updateData = {
+        $set: {
+          bookingDate: updateDate.date,
+        },
+      };
+      const result = await bookingCollection.updateOne(
+        filter,
+        updateData,
+        option
+      );
+      res.send(result);
+      console.log(result);
     });
     // delete a booking
     app.delete("/booking/:id", async (req, res) => {
