@@ -67,7 +67,8 @@ async function run() {
         console.log({ message: error });
       }
     });
-    //get specific bookings
+
+    // get specific bookings
     app.get("/booking/:email", async (req, res) => {
       try {
         const email = req.params.email;
@@ -79,6 +80,19 @@ async function run() {
         console.log({ message: error });
       }
     });
+    // delete a booking
+    app.delete("/booking/:id", async (req, res) => {
+      try {
+        const bookingId = req.params.id;
+        const query = { _id: new ObjectId(bookingId) };
+        const result = await bookingCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log({ message: error });
+      }
+    });
+
+    // some room data using email:
 
     await client.db("admin").command({ ping: 1 });
     console.log(
