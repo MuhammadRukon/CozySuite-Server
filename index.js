@@ -47,6 +47,21 @@ async function run() {
       }
     });
 
+    //update specific data
+    app.patch("/rooms/:id", async (req, res) => {
+      const roomId = req.params.id;
+      const updateSeat = req.body;
+      const filter = { _id: new ObjectId(roomId) };
+      const option = { upsert: false };
+      const updateInfo = {
+        $set: {
+          availability: updateSeat.availability,
+        },
+      };
+      const result = await roomCollection.updateOne(filter, updateInfo, option);
+      res.send(result);
+    });
+
     // add booking
     app.post("/booking", async (req, res) => {
       try {
@@ -72,7 +87,6 @@ async function run() {
     app.get("/booking/:email", async (req, res) => {
       try {
         const email = req.params.email;
-        console.log(email);
         const query = { email: email };
         const result = await bookingCollection.find(query).toArray();
         res.send(result);
@@ -91,8 +105,6 @@ async function run() {
         console.log({ message: error });
       }
     });
-
-    // some room data using email:
 
     await client.db("admin").command({ ping: 1 });
     console.log(
