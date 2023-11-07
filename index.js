@@ -1,9 +1,18 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
+
 const port = process.env.PORT || 5000;
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -17,13 +26,53 @@ const client = new MongoClient(uri, {
   },
 });
 
+//middle ware
+const verifyToken = (req, res, next) => {
+  const token = req?.cookies?.token;
+
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.user = decoded;
+  });
+  next();
+};
+
 async function run() {
   try {
     // await client.connect();
     const roomCollection = client.db("roomDB").collection("rooms");
     const bookingCollection = client.db("roomDB").collection("booking");
+
     app.get("/", (req, res) => {
       res.send("server root route");
+    });
+
+    // jwt
+    app.post("/auth/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
+        .send({ success: "true" });
+    });
+
+    //create cookie
+    app.post("/logout", async (req, res) => {
+      // api is not hitting while logout function rather in side useEffect when currentUser = undefined hence req.body in undefied
+      const user = req.body;
+
+      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
     });
 
     //get all data
@@ -84,8 +133,11 @@ async function run() {
     });
 
     // get specific bookings
-    app.get("/booking/:email", async (req, res) => {
+    app.get("/booking/:email", verifyToken, async (req, res) => {
       try {
+        if (req.user.email !== req.params.email) {
+          return res.status(403).send({ message: "forbidden access" });
+        }
         const email = req.params.email;
         const query = { email: email };
         const result = await bookingCollection.find(query).toArray();
