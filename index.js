@@ -88,8 +88,10 @@ async function run() {
     app.get("/rooms/details/:id", async (req, res) => {
       try {
         const id = req.params.id;
+
         const query = { _id: new ObjectId(id) };
         const result = await roomCollection.find(query).toArray();
+
         res.send(result);
       } catch (error) {
         console.log({ meesage: error });
@@ -108,6 +110,20 @@ async function run() {
         },
       };
       const result = await roomCollection.updateOne(filter, updateInfo, option);
+      res.send(result);
+    });
+    //update review data of specific room data
+    app.put("/rooms/:id", async (req, res) => {
+      const roomId = req.params.id;
+      const reviewData = req.body;
+      const filter = { _id: new ObjectId(roomId) };
+      const review = {
+        $push: {
+          reviews: reviewData,
+        },
+      };
+      const result = await roomCollection.updateOne(filter, review);
+      console.log(result);
       res.send(result);
     });
 
