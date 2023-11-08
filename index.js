@@ -6,7 +6,11 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://cozysuite-15955.web.app",
+      "https://cozysuite-15955.firebaseapp.com",
+    ],
     credentials: true,
   })
 );
@@ -29,7 +33,6 @@ const client = new MongoClient(uri, {
 //middle ware
 const verifyToken = (req, res, next) => {
   const token = req?.cookies?.token;
-
   if (!token) {
     return res.status(401).send({ message: "unauthorized access" });
   }
@@ -55,9 +58,7 @@ async function run() {
     // jwt
     app.post("/auth/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
       res
         .cookie("token", token, {
           httpOnly: true,
@@ -139,7 +140,7 @@ async function run() {
     });
 
     //get all booking data
-    app.get("/booking", async (req, res) => {
+    app.get("/booking", verifyToken, async (req, res) => {
       try {
         const result = await bookingCollection.find().toArray();
         res.send(result);
@@ -151,7 +152,7 @@ async function run() {
     // get specific bookings
     app.get("/booking/:email", verifyToken, async (req, res) => {
       try {
-        if (req.user.email !== req.params.email) {
+        if (req.user?.email !== req.params?.email) {
           return res.status(403).send({ message: "forbidden access" });
         }
         const email = req.params.email;
@@ -163,7 +164,7 @@ async function run() {
       }
     });
     // get single booking
-    app.get("/mybookings/update/:id", async (req, res) => {
+    app.get("/mybookings/update/:id", verifyToken, async (req, res) => {
       try {
         const bookingId = req.params.id;
         const query = { _id: new ObjectId(bookingId) };
@@ -174,7 +175,7 @@ async function run() {
       }
     });
     // update booking date
-    app.patch("/mybookings/update/:id", async (req, res) => {
+    app.patch("/mybookings/update/:id", verifyToken, async (req, res) => {
       const bookingId = req.params.id;
       const updateDate = req.body;
       const filter = { _id: new ObjectId(bookingId) };
