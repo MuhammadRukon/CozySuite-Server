@@ -7,7 +7,7 @@ require("dotenv").config();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
+      // "http://localhost:5173",
       "https://cozysuite-15955.web.app",
       "https://cozysuite-15955.firebaseapp.com",
     ],
@@ -70,9 +70,6 @@ async function run() {
 
     //create cookie
     app.post("/logout", async (req, res) => {
-      // api is not hitting while logout function rather in side useEffect when currentUser = undefined hence req.body in undefied
-      const user = req.body;
-
       res.clearCookie("token", { maxAge: 0 }).send({ success: true });
     });
 
@@ -216,5 +213,5 @@ async function run() {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log("server running");
+  console.log(`server running on port${port}`);
 });
